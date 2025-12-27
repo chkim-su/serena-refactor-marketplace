@@ -47,9 +47,7 @@
         "./agents/refactor-auditor.md",
         "./agents/duplicate-detector.md"
       ],
-      "hooks": [
-        "./hooks/hooks.json"
-      ]
+      "hooks": "./hooks/hooks.json"
     }
   ]
 }
