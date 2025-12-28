@@ -2,3 +2,11 @@ firebase-debug.log
 
 # Refactoring workflow state files
 .refactor-*
+.inject-*
+
+# Serena project cache
+.serena/
+
+# Python cache
+__pycache__/
+*.pyc

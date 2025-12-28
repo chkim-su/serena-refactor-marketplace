@@ -61,6 +61,36 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SUBAGENT=$(echo \"$INPUT\" | jq -r '.tool_input.subagent_type // \"\"'); [[ \"$SUBAGENT\" != *\"knowledge-extractor\"* ]] && exit 0; echo '' && echo '════════════════════════════════════════════════════════════' && echo '  📚 KNOWLEDGE EXTRACTION - Starting Extraction' && echo '════════════════════════════════════════════════════════════' && echo '' && echo '  Extraction targets:' && echo '  • Project structure and modules' && echo '  • Symbol definitions and relationships' && echo '  • Design patterns and conventions' && echo '  • Dependency graph' && echo '════════════════════════════════════════════════════════════'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SUBAGENT=$(echo \"$INPUT\" | jq -r '.tool_input.subagent_type // \"\"'); [[ \"$SUBAGENT\" != *\"feature-planner\"* ]] && exit 0; echo '' && echo '════════════════════════════════════════════════════════════' && echo '  📋 FEATURE PLANNING - Pre-Planning Verification' && echo '════════════════════════════════════════════════════════════' && echo '' && if [ ! -f .inject-knowledge-extracted ]; then echo '  ⚠️  WARNING: Planning without knowledge extraction'; echo '     → Recommended: Run /serena-refactor:extract first'; else echo '  ✓ Knowledge extraction confirmed'; fi && echo '════════════════════════════════════════════════════════════'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SUBAGENT=$(echo \"$INPUT\" | jq -r '.tool_input.subagent_type // \"\"'); [[ \"$SUBAGENT\" != *\"code-injector\"* ]] && exit 0; echo '' && echo '════════════════════════════════════════════════════════════' && echo '  💉 CODE INJECTION - Workflow Verification' && echo '════════════════════════════════════════════════════════════' && echo '' && BLOCKED=0 && if [ ! -f .inject-plan-approved ]; then echo '  ❌ BLOCKED: Feature plan not approved'; echo '     → Run feature-planner and approve plan first'; BLOCKED=1; else echo '  ✓ Feature plan approved'; fi && git rev-parse --git-dir > /dev/null 2>&1 && (git diff --quiet HEAD 2>/dev/null && echo '  ✓ Git clean' || echo '  ⚠️  Uncommitted changes - git stash recommended') && echo '' && if [ $BLOCKED -eq 1 ]; then echo '  🚫 Injection blocked due to workflow violation.' && echo '════════════════════════════════════════════════════════════' && exit 1; else echo '  ✓ All conditions met - Injection allowed' && echo '════════════════════════════════════════════════════════════'; fi",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -133,6 +163,46 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SUBAGENT=$(echo \"$INPUT\" | jq -r '.tool_input.subagent_type // \"\"'); [[ \"$SUBAGENT\" != *\"knowledge-extractor\"* ]] && exit 0; touch .inject-knowledge-extracted && echo '' && echo '════════════════════════════════════════════════════════════' && echo '  ✓ Knowledge Extraction Complete - State Saved' && echo '' && echo '  [.inject-knowledge-extracted] created' && echo '' && echo '  Next steps:' && echo '  → Run feature-planner with feature description' && echo '  → Or /serena-refactor:inject [feature]' && echo '════════════════════════════════════════════════════════════'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SUBAGENT=$(echo \"$INPUT\" | jq -r '.tool_input.subagent_type // \"\"'); [[ \"$SUBAGENT\" != *\"feature-planner\"* ]] && exit 0; touch .inject-plan-approved && echo '' && echo '════════════════════════════════════════════════════════════' && echo '  ✓ Feature Plan Created' && echo '' && echo '  [.inject-plan-approved] created' && echo '  → Plan auto-approved.' && echo '  → If issues found, run: rm .inject-plan-approved' && echo '' && echo '  Next steps:' && echo '  → Review the plan carefully' && echo '  → Run code-injector to execute' && echo '════════════════════════════════════════════════════════════'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SUBAGENT=$(echo \"$INPUT\" | jq -r '.tool_input.subagent_type // \"\"'); [[ \"$SUBAGENT\" != *\"code-injector\"* ]] && exit 0; touch .inject-execution-done && echo '' && echo '════════════════════════════════════════════════════════════' && echo '  ✓ Code Injection Complete' && echo '' && echo '  [.inject-execution-done] created' && echo '' && echo '  ⚠️  Recommended: Verify injected code' && echo '  → Run syntax check / linter' && echo '  → /serena-refactor:audit for quality verification' && echo '' && echo '  After verification:' && echo '  → git diff to review changes' && echo '  → git add . && git commit -m \"feat: [description]\"' && echo '════════════════════════════════════════════════════════════'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SUBAGENT=$(echo \"$INPUT\" | jq -r '.tool_input.subagent_type // \"\"'); [[ \"$SUBAGENT\" != *\"code-injector\"* ]] && exit 0; OUTPUT=$(echo \"$INPUT\" | jq -r '.tool_result // \"\"'); echo \"$OUTPUT\" | grep -qE '\"status\":\\s*\"success\"|status.*success' || exit 0; rm -f .inject-knowledge-extracted .inject-plan-approved 2>/dev/null && echo '' && echo '  ✓ Injection workflow state cleaned (success)'",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [
@@ -140,7 +210,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '' && echo '════════════════════════════════════════════════════════════' && echo '  💡 Session Ending - Status Check' && echo '════════════════════════════════════════════════════════════' && echo '' && if [ -f .refactor-analysis-done ] || [ -f .refactor-plan-approved ] || [ -f .refactor-execution-done ]; then echo '  ⚠️  In-progress refactoring workflow:' && ls -la .refactor-* 2>/dev/null | awk '{print \"    \" $NF}' && echo '' && echo '  Keep state files to continue in next session' && echo '  To cancel: rm .refactor-*'; else echo '  ✓ No workflow in progress'; fi && echo '' && git rev-parse --git-dir > /dev/null 2>&1 && (git diff --quiet HEAD 2>/dev/null || (echo '  ⚠️  Uncommitted changes:' && echo '  → Save: git commit -m \"refactor: ...\"' && echo '  → Rollback: git checkout -- .' && echo '' && if [ ! -f .refactor-audit-passed ]; then echo '  🚫 No commits without verification!' && echo '  → Run /serena-refactor:audit first'; fi)) && echo '════════════════════════════════════════════════════════════' || true",
+            "command": "echo '' && echo '════════════════════════════════════════════════════════════' && echo '  💡 Session Ending - Status Check' && echo '════════════════════════════════════════════════════════════' && echo '' && REFACTOR_WF=0 && INJECT_WF=0 && if [ -f .refactor-analysis-done ] || [ -f .refactor-plan-approved ] || [ -f .refactor-execution-done ]; then echo '  ⚠️  In-progress refactoring workflow:' && ls -la .refactor-* 2>/dev/null | awk '{print \"    \" $NF}' && REFACTOR_WF=1; fi && if [ -f .inject-knowledge-extracted ] || [ -f .inject-plan-approved ] || [ -f .inject-execution-done ]; then echo '  ⚠️  In-progress injection workflow:' && ls -la .inject-* 2>/dev/null | awk '{print \"    \" $NF}' && INJECT_WF=1; fi && if [ $REFACTOR_WF -eq 0 ] && [ $INJECT_WF -eq 0 ]; then echo '  ✓ No workflow in progress'; else echo '' && echo '  Keep state files to continue in next session' && echo '  To cancel: rm .refactor-* .inject-*'; fi && echo '' && git rev-parse --git-dir > /dev/null 2>&1 && (git diff --quiet HEAD 2>/dev/null || (echo '  ⚠️  Uncommitted changes:' && echo '  → Save: git commit -m \"feat/refactor: ...\"' && echo '  → Rollback: git checkout -- .' && echo '' && if [ ! -f .refactor-audit-passed ] && [ ! -f .inject-execution-done ]; then echo '  🚫 Recommend verification before commit!' && echo '  → Run /serena-refactor:audit'; fi)) && echo '════════════════════════════════════════════════════════════' || true",
             "timeout": 10
           }
         ]
